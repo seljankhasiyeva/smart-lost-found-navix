@@ -1,0 +1,49 @@
+# --- Secrets & Environment ---
+# Critical: Never commit real API keys or secrets
+.env
+.env.local
+.env.*.local
+
+# --- Python & Dependencies ---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Tests and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / Packaging
+dist/
+build/
+*.egg-info/
+
+# --- Databases ---
+# Exclude local database files as per requirement 4.1
+*.db
+*.sqlite3
+
+# --- Runtime Image Storage ---
+image_store/
+
+# Allow these directories to be tracked in Git even if empty
+!data/found/.gitkeep
+!data/lost/.gitkeep
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Editor Specific ---
+.vscode/
+.idea/
+*.swp
+*.swo
