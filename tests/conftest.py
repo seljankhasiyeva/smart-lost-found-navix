@@ -1,3 +1,6 @@
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
 """Shared pytest fixtures for the AI smoke tests.
 
 The fakes live here so both the AI smoke tests and any student-written
@@ -86,3 +89,20 @@ def sample_image(tmp_path):
     p = tmp_path / "tiny.png"
     p.write_bytes(png_bytes)
     return str(p)
+
+@pytest.fixture
+def mock_pool():
+    """Mock asyncpg pool for storage tests."""
+    pool = MagicMock()
+    conn = MagicMock()
+    pool.acquire.return_value.__aenter__ = AsyncMock(return_value=conn)
+    pool.acquire.return_value.__aexit__ = AsyncMock(return_value=False)
+    return pool, conn
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Session-scoped event loop for async tests."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
