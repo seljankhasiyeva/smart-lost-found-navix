@@ -1,6 +1,3 @@
--- docs/schema.sql
--- Smart Lost & Found — items cədvəli
-
 CREATE EXTENSION IF NOT EXISTS 'uuid-ossp';
 
 CREATE TABLE IF NOT EXISTS items (

@@ -1,4 +1,3 @@
-# src/core/interfaces.py
 from abc import ABC, abstractmethod
 import uuid
 
