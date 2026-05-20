@@ -18,7 +18,7 @@ class ItemRecord(BaseModel):
     confidence: Optional[float] = None
     created_at: Optional[datetime] = None
 
-class MatchResult(BaseModel):
+class ItemMatchResult(BaseModel):
     item: ItemRecord
     score: float
     reason: Optional[str] = None
