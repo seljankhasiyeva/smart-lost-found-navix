@@ -111,6 +111,11 @@ class Settings(BaseSettings):
         description="Per-call timeout for AI requests in seconds.",
     )
 
+    ai_token_per_minute_limit: int = Field(
+        default=40000,
+        description="Token per minute limit for TokenRateLimiter.",
+    )
+
     # ------------------------------------------------------------------
     # Token-aware Rate Limiting  (Bonus: token-aware rate limiter)
     # ------------------------------------------------------------------
