@@ -1,4 +1,3 @@
-# src/config.py
 """
 Central configuration for the Smart Lost & Found project.
 
