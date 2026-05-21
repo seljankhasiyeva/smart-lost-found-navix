@@ -111,4 +111,4 @@ def top_matches(
 def clear_cache() -> None:
     """Clear embedding cache. Used in tests."""
     global _embed_cache
-    _embed_cache = {}
+    
