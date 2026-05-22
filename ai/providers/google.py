@@ -16,7 +16,7 @@ class GeminiVLM(VLMProvider):
             raise ProviderError('GOOGLE_API_KEY is not set.')
         self.client = genai.Client(api_key=api_key)
 
-    def describe(self, image_path: str, prompt: str, *, json_schema: dict | None = None) -> str:
+    def describe(self, image_path: str, prompt: str, *, json_schema: any = None) -> str:
         path = Path(image_path)
         if not path.is_file():
             raise FileNotFoundError(image_path)
@@ -28,7 +28,13 @@ class GeminiVLM(VLMProvider):
             config = types.GenerateContentConfig()
             if json_schema is not None:
                 config.response_mime_type = "application/json"
-                config.response_schema = json_schema
+                
+                # Əgər json_schema köhnə formatda dict olaraq gəlibsə, 
+                # .upper() xətasının qarşısını almaq üçün types.Schema formatına uyğunlaşdırırıq
+                if isinstance(json_schema, dict):
+                    config.response_schema = types.Schema(**json_schema)
+                else:
+                    config.response_schema = json_schema
 
             response = self.client.models.generate_content(
                 model=self.model,
@@ -49,7 +55,7 @@ class GeminiEmbedding(EmbeddingProvider):
         if not self.api_key:
             raise ProviderError('GOOGLE_API_KEY is not set.')
         
-        # 404 xətasını həll edən əsas hissə: API versiyasını v1beta-ya məcbur edirik
+        # text-embedding-004 modelinin rəsmi v1beta sığortası
         self.client = genai.Client(api_key=self.api_key, http_options={'api_version': 'v1beta'})
         self._dim = 768
 
