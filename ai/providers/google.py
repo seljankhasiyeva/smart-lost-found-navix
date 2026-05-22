@@ -1,4 +1,4 @@
-"""Google Gemini provider adapters using official google-genai SDK."""
+"""Google Gemini provider adapters using the official google-genai SDK."""
 
 from __future__ import annotations
 import os
@@ -9,21 +9,27 @@ from google.genai import types
 from ai.providers.base import VLMProvider, EmbeddingProvider, ProviderError
 
 def sanitize_json_schema(schema: dict) -> dict:
-    """Köhnə JSON-Schema formatını yeni Google SDK-nın başa düşəcəyi təmiz formaya salır."""
+    """Sanitizes legacy JSON-Schema definitions to make them compatible with the new Google GenAI SDK.
+    
+    This function removes forbidden attributes like 'additionalProperties' and flattens
+    type definitions that contain multiple types (e.g., ['string', 'null']) into a single,
+    primitive string type. This prevents internal SDK crashes such as AttributeError and 
+    Pydantic validation schema mismatches.
+    """
     if not isinstance(schema, dict):
         return schema
 
-    # 1. additionalProperties parametrini silirik (yeni SDK buna icazə vermir)
+    # 1. Strip 'additionalProperties' as the new SDK validator explicitly forbids extra fields
     schema.pop("additionalProperties", None)
 
-    # 2. Xüsusiyyətləri (properties) tək-tək yoxlayıb massiv tipləri təmizləyirik
+    # 2. Walk through schema properties and normalize data types
     properties = schema.get("properties", {})
     for prop_name, prop_meta in properties.items():
         if isinstance(prop_meta, dict):
             prop_type = prop_meta.get("type")
             
-            # Əgər tip ['string', 'null'] şəklində massivdirsə, onu tək tipə ('string') çeviririk.
-            # Bu, SDK-nın daxildə '.upper()' xətası verməsinin qarşısını alır.
+            # If the type is an array/list (e.g., ['string', 'null']), resolve it to a single primitive.
+            # This directly bypasses the SDK's internal `.upper()` crash on list parameters.
             if isinstance(prop_type, list):
                 if "string" in prop_type:
                     prop_meta["type"] = "string"
@@ -36,7 +42,7 @@ def sanitize_json_schema(schema: dict) -> dict:
                 else:
                     prop_meta["type"] = prop_type[0]
             
-            # Alt obyektlər və ya massivlər üçün rekursiv olaraq təmizləməni davam etdiririk
+            # Recursively sanitize nested structures within items or sub-properties
             if "items" in prop_meta:
                 sanitize_json_schema(prop_meta["items"])
             if "properties" in prop_meta:
@@ -65,8 +71,8 @@ class GeminiVLM(VLMProvider):
             if json_schema is not None:
                 config.response_mime_type = "application/json"
                 
-                # Əgər dict (raw JSON-schema) gəlibsə, onu əvvəlcə təmizləyirik,
-                # sonra types.Schema formatına salırıq.
+                # If a raw dictionary (legacy schema format) is supplied, 
+                # sanitize it before converting it into a structured types.Schema instance.
                 if isinstance(json_schema, dict):
                     import copy
                     clean_schema = sanitize_json_schema(copy.deepcopy(json_schema))
@@ -93,7 +99,7 @@ class GeminiEmbedding(EmbeddingProvider):
         if not self.api_key:
             raise ProviderError('GOOGLE_API_KEY is not set.')
         
-        # 404 NOT_FOUND xətasını həll etmək üçün API versiyasını 'v1beta' olaraq məcbur edirik
+        # Enforce v1beta API version headers to prevent 404 client errors with text-embedding-004
         self.client = genai.Client(api_key=self.api_key, http_options={'api_version': 'v1beta'})
         self._dim = 768
 
