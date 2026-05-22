@@ -29,10 +29,11 @@ class GeminiVLM(VLMProvider):
             if json_schema is not None:
                 config.response_mime_type = "application/json"
                 
-                # Əgər json_schema köhnə formatda dict olaraq gəlibsə, 
-                # .upper() xətasının qarşısını almaq üçün types.Schema formatına uyğunlaşdırırıq
+                # Əgər dict (raw JSON-schema) gəlibsə, SDK-nın daxili transformer funksiyasından
+                # keçiririk ki, validation error-ların hamısı aradan qalxsın.
                 if isinstance(json_schema, dict):
-                    config.response_schema = types.Schema(**json_schema)
+                    from google.genai._transformers import t_schema
+                    config.response_schema = t_schema(self.client, json_schema)
                 else:
                     config.response_schema = json_schema
 
