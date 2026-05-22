@@ -45,8 +45,6 @@ ruff==0.4.4
 opentelemetry-api==1.24.0
 opentelemetry-sdk==1.24.0
 
-# ── Bonus: Web UI ────────────────────────────────────────────
-gradio==4.36.1
 
 # ── Bonus: Streaming ─────────────────────────────────────────
 httpx==0.27.0
