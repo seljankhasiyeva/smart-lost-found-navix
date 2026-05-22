@@ -1,12 +1,4 @@
-# ============================================================
-# Smart Lost & Found — team-NaviX
-# Full pinned requirements (AI layer + SE layer + bonuses)
-# ============================================================
-# Quraşdırmaq üçün:
-#   pip install -r requirements.txt
-# ============================================================
-
-# ── AI layer (verilmiş ai/ paketi üçün) ─────────────────────
+﻿# ── AI layer ─────────────────────────────────────────────────
 numpy>=1.24
 pydantic>=2.7
 anthropic>=0.39.0
@@ -27,7 +19,7 @@ click==8.1.7
 pydantic-settings==2.3.0
 python-dotenv==1.0.1
 
-# ── Retry / robustness ───────────────────────────────────────
+# ── Retry ────────────────────────────────────────────────────
 tenacity==8.3.0
 
 # ── File validation ──────────────────────────────────────────
@@ -45,10 +37,10 @@ pytest-httpx==0.30.0
 # ── Type checking ────────────────────────────────────────────
 mypy==1.10.0
 
-# ── Linting (Bonus: GitHub Actions CI) ───────────────────────
+# ── Linting ──────────────────────────────────────────────────
 ruff==0.4.4
 
-# ── Bonus: OpenTelemetry tracing ─────────────────────────────
+# ── Bonus: OpenTelemetry ─────────────────────────────────────
 opentelemetry-api==1.24.0
 opentelemetry-sdk==1.24.0
 
