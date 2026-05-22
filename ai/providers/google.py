@@ -17,7 +17,7 @@ class GeminiVLM(VLMProvider):
         if not self._api_key:
             raise ProviderError("GOOGLE_API_KEY is not set.")
 
-    def describe(self, image_path, prompt, *, json_schema=None):
+def describe(self, image_path, prompt, *, json_schema=None):
         path = Path(image_path)
         if not path.is_file():
             raise FileNotFoundError(image_path)
@@ -28,10 +28,14 @@ class GeminiVLM(VLMProvider):
         mime = mimetypes.guess_type(str(path))[0] or "image/jpeg"
         b64 = base64.b64encode(path.read_bytes()).decode()
         url = f"{BASE}/models/{self.model}:generateContent?key={self._api_key}"
-        body = {"contents": [{"parts": [
-            {"inline_data": {"mime_type": mime, "data": b64}},
-            {"text": full_prompt}
-        ]}]}
+        body = {
+            "contents": [{
+                "parts": [
+                    {"inlineData": {"mimeType": mime, "data": b64}},
+                    {"text": full_prompt}
+                ]
+            }]
+        }
         try:
             r = requests.post(url, json=body, timeout=60)
             r.raise_for_status()
