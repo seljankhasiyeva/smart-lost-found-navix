@@ -35,6 +35,19 @@ services:
     volumes:
       - image_store:/app/image_store
 
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: lostfound-ui
+    ports:
+      - "7860:7860"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
   image_store:
+
