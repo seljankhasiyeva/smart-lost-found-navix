@@ -46,6 +46,7 @@ The innermost layer. No imports from any other layer in this project.
 | `src/core/interfaces.py` | `ItemRepositoryABC` — abstract contract for storage |
 | `src/core/exceptions.py` | Domain-level exceptions (`ItemNotFound`, `StorageError`) |
 | `src/config.py` | `pydantic-settings` typed env vars, singleton `settings` object |
+| `src/core/validation.py` | `validate_image`, `validate_status`, `validate_item_id` |
 
 **Rule:** Nothing in `src/core/` or `src/models.py` imports from `services/`,
 `concurrency/`, `storage/`, `api.py`, or `ai/`.
@@ -62,6 +63,11 @@ No HTTP, no DB drivers here.
 | `src/services/ai_service.py` | Wraps `ai.vlm` + `ai.embedding` with semaphore, logging, cache |
 | `src/services/retry.py` | Tenacity decorator, exponential backoff, `setup_logging()` |
 | `src/concurrency/pipeline.py` | `register_item()`, `register_batch()`, `find_matches()` — async orchestration via `asyncio.gather` |
+| `src/services/cost_telemetry.py` | token counts + $ per call (bonus) |
+| `src/services/failover.py` | multi-provider failover (bonus) |
+| `src/services/rate_limiter.py` | token-aware rate limiter (bonus) |
+| `src/services/streaming.py` | streaming responses (bonus) |
+| `src/services/telemetry.py` | OpenTelemetry spans (bonus) |
 
 **Rule:** `services/` and `concurrency/` import from `core/` and call `ai/` only
 through `ai_service.py`. They never import `asyncpg`, `fastapi`, or `click` directly.  
@@ -118,63 +124,105 @@ All layers ──▶ models.py, core/, config.py
 ---
 
 ## Complete Folder Structure
-
 ```
 team-NaviX/
 ├── README.md
 ├── requirements.txt
-├── pyproject.toml
+├── requirements-ai.txt
 ├── Dockerfile
+├── docker-compose.yml
+├── pytest.ini
+├── mypy_output.txt
 ├── .env.example
 ├── .gitignore
+│
+├── .github/
+│   ├── pull_request_template.md
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI (bonus)
 │
 ├── ai/                          # PROVIDED — do not modify
 │   ├── __init__.py
 │   ├── vlm.py                   # describe_item(image_path, user_text)
 │   ├── embedding.py             # embed(text) → unit vector
 │   ├── similarity.py            # cosine(), top_k()
-│   └── schemas.py               # ItemDescription pydantic schema
+│   ├── schemas.py               # ItemDescription pydantic schema
+│   └── providers/
+│       ├── __init__.py
+│       ├── anthropic.py
+│       ├── base.py
+│       ├── factory.py
+│       ├── google.py
+│       └── openai.py
 │
 ├── src/
 │   ├── __init__.py
 │   ├── config.py                # DOMAIN — typed env settings, singleton
 │   ├── models.py                # DOMAIN — ItemCreate, ItemRecord, MatchResult
+│   ├── api.py                   # INFRASTRUCTURE — FastAPI entry point
+│   ├── cli.py                   # INFRASTRUCTURE — Click entry point
 │   │
-│   ├── core/                    # DOMAIN — business logic
-│   │   ├── __init__.py          # similarity thresholds, domain constants
+│   ├── core/                    # DOMAIN — business rules & contracts
+│   │   ├── __init__.py
 │   │   ├── interfaces.py        # ItemRepositoryABC abstract contract
-│   │   └── exceptions.py        # ItemNotFound, StorageError, etc.
+│   │   ├── exceptions.py        # ItemNotFound, StorageError, etc.
+│   │   └── validation.py        # validate_image, validate_status, validate_item_id
 │   │
 │   ├── services/                # APPLICATION — wrappers around ai/, retries, logging
 │   │   ├── __init__.py
 │   │   ├── ai_service.py        # ai/ wrapper — semaphore, logging, cache
-│   │   └── retry.py             # Tenacity backoff, setup_logging()
+│   │   ├── retry.py             # Tenacity backoff, setup_logging()
+│   │   ├── cost_telemetry.py    # token counts + $ per call (bonus)
+│   │   ├── failover.py          # multi-provider failover (bonus)
+│   │   ├── rate_limiter.py      # token-aware rate limiter (bonus)
+│   │   ├── streaming.py         # streaming responses (bonus)
+│   │   └── telemetry.py         # OpenTelemetry spans (bonus)
 │   │
 │   ├── concurrency/             # APPLICATION — async orchestration
 │   │   ├── __init__.py
 │   │   └── pipeline.py          # register_item(), register_batch(), find_matches()
 │   │
-│   ├── storage/                 # INFRASTRUCTURE — persistence
-│   │   ├── __init__.py
-│   │   └── repository.py        # ItemRepository — asyncpg, save_image(), create_pool()
-│   │
-│   ├── api.py                   # INFRASTRUCTURE — FastAPI entry point
-│   └── cli.py                   # INFRASTRUCTURE — Click entry point
+│   └── storage/                 # INFRASTRUCTURE — persistence
+│       ├── __init__.py
+│       └── repository.py        # ItemRepository — asyncpg, save_image(), create_pool()
 │
 ├── tests/
-│   ├── __init__.py
 │   ├── conftest.py              # mock_pool, mock_ai, event_loop fixtures
+│   ├── test_ai_smoke.py         # PROVIDED — never delete or weaken
 │   ├── test_services.py         # embed cache hit/miss, describe_item logging
 │   ├── test_core.py             # business rule unit tests
 │   ├── test_concurrency.py      # gather succeeds, one-task-raises, benchmark
-│   └── test_end_to_end.py       # register → match happy path (mocked AI)
+│   ├── test_storage.py          # CRUD happy path, mock DB
+│   ├── test_robustness.py       # bad MIME, oversized, unknown item ID
+│   ├── test_retry.py            # retry on ConnectionError, 3-attempt limit
+│   ├── test_end_to_end.py       # register → match happy path (mocked AI)
+│   ├── test_failover.py         # multi-provider failover (bonus)
+│   ├── test_rate_limiter.py     # token-aware rate limiter (bonus)
+│   └── test_bonus_modules.py    # bonus module tests
 │
-├── data/                        # sample inputs
-│   ├── lost/
-│   └── found/
+├── scripts/
+│   ├── demo.py                  # registers all data/ items, prints top-3 matches — GRADED
+│   └── benchmark.py             # sequential vs concurrent wall-clock comparison
 │
-├── artefacts/                   # outputs of demo runs
+├── data/
+│   ├── lost/                    # sample lost item images
+│   └── found/                   # sample found item images
 │
-└── docs/
-    └── architecture.md          # this file
+├── artefacts/                   # output of demo runs — required in submission
+│   ├── matches.json
+│   ├── register_found.json
+│   └── register_lost.json
+│
+├── ui/                          # Streamlit Web UI (bonus)
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── docs/
+│   ├── architecture.md          # this file
+│   └── schema.sql               # items table DDL
+│
+└── report/
+    ├── Report.pdf
+    └── Slide.pdf
 ```
