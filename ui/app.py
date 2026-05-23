@@ -84,31 +84,19 @@ def list_items(status_filter):
         return f"Error: {e}"
 
 
-with gr.Blocks(
-    title="Smart Lost & Found",
-    theme=gr.themes.Soft(primary_hue="slate", neutral_hue="slate"),
-    css="""
-        .gradio-container { max-width: 860px !important; margin: auto; padding-top: 1.5rem; }
-        h1 { text-align: center; font-size: 1.8rem; margin-bottom: 0.1rem; }
-        .subtitle { text-align: center; color: #888; font-size: 0.95rem; margin-bottom: 1.5rem; }
-        .gr-button-primary { width: 100%; margin-top: 0.5rem; }
-        .gr-tab-item { font-weight: 600; font-size: 0.95rem; }
-        footer { display: none !important; }
-    """,
-) as demo:
+with gr.Blocks(title="Smart Lost & Found") as demo:
 
     gr.Markdown("# Smart Lost & Found")
-    gr.Markdown("<p class='subtitle'>AI-powered item matching system</p>")
+    gr.Markdown("AI-powered item matching system")
 
     with gr.Tab("Register Item"):
-        with gr.Row(equal_height=True):
-            with gr.Column(scale=1):
+        with gr.Row():
+            with gr.Column():
                 image_input = gr.Image(
                     type="filepath",
                     label="Upload Image (JPG/PNG)",
-                    height=240,
                 )
-            with gr.Column(scale=1):
+            with gr.Column():
                 status_input = gr.Radio(
                     choices=["lost", "found"],
                     value="lost",
@@ -116,10 +104,10 @@ with gr.Blocks(
                 )
                 desc_input = gr.Textbox(
                     label="Description",
-                    placeholder="e.g. Black Nike backpack with a scratch on the left side",
+                    placeholder="e.g. Black Nike backpack",
                     lines=3,
                 )
-                register_btn = gr.Button("Submit Registration", variant="primary")
+                register_btn = gr.Button("Submit Registration")
         register_output = gr.Markdown()
         register_btn.click(
             fn=register_item,
@@ -132,11 +120,8 @@ with gr.Blocks(
             label="Item ID",
             placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000",
         )
-        k_input = gr.Slider(
-            minimum=1, maximum=10, value=3, step=1,
-            label="Number of matches (k)",
-        )
-        search_btn = gr.Button("Search Matches", variant="primary")
+        k_input = gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of matches (k)")
+        search_btn = gr.Button("Search Matches")
         search_output = gr.Markdown()
         search_btn.click(
             fn=find_matches,
@@ -150,7 +135,7 @@ with gr.Blocks(
             value="All",
             label="Filter by status",
         )
-        list_btn = gr.Button("Refresh List", variant="primary")
+        list_btn = gr.Button("Refresh List")
         list_output = gr.Markdown()
         list_btn.click(
             fn=list_items,
@@ -159,4 +144,4 @@ with gr.Blocks(
         )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
