@@ -152,3 +152,8 @@ def test_cli_search_matches_help():
     runner = CliRunner()
     result = runner.invoke(cli, ["search-matches", "--help"])
     assert result.exit_code == 0
+from src.services.telemetry import setup_tracing
+
+def test_telemetry_setup():
+    tracer = setup_tracing()
+    assert tracer is not None
