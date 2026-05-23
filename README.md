@@ -135,6 +135,15 @@ pytest tests/ --cov=src --cov-report=term-missing
 
 All tests run offline. AI module and database are mocked via `conftest.py` fixtures.
 
+- Total coverage: **75%**
+- Provided AI smoke tests: **passing**
+- Coverage threshold: ≥ 60% ✓
+
+Reproduce coverage:
+```bash
+pytest tests/ --cov=src --cov-fail-under=60
+```
+
 ---
 
 ## Benchmark
@@ -156,6 +165,8 @@ python scripts/benchmark.py
 ```
 
 ---
+
+
 
 ## Project Structure
 
