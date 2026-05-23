@@ -1,16 +1,7 @@
 FROM python:3.11-slim
-
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PYTHONDONTWRITEBYTECODE=1
-
 WORKDIR /app
-
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY app.py .
-
 EXPOSE 7860
-
-CMD ["python", "app.py"]
+CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]

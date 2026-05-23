@@ -1,5 +1,8 @@
-gradio==3.50.2
+streamlit==1.28.0
 requests==2.31.0
+<<<<<<< Updated upstream
 huggingface-hub==0.19.4
 jinja2==3.1.4
 markupsafe==2.1.5
+=======
+>>>>>>> Stashed changes

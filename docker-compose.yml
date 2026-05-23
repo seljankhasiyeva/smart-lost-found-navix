@@ -43,7 +43,7 @@ services:
     ports:
       - "7860:7860"
     environment:
-      - API_URL=http://api:8000
+      - API_URL=http://lostfound-api:8000
     depends_on:
       - api
 
