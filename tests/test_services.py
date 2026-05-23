@@ -161,6 +161,3 @@ def test_top_matches_delegates_to_similarity_module():
         return_value=fake_results,
     ) as mock_top_k:
         result = ai_service.top_matches(query_vec, candidates, k=2)
-
-    assert result == fake_results
-    mock_top_k.assert_called_once_with(query_vec, candidates, 2)

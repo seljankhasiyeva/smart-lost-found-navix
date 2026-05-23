@@ -6,6 +6,10 @@ from opentelemetry.sdk.trace.export import ConsoleSpanExporter, BatchSpanProcess
 
 
 def setup_tracing() -> trace.Tracer:
+    """
+    Configure OpenTelemetry tracing with a console exporter.
+    Called once at application startup.
+    """
     provider = TracerProvider()
     provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
     trace.set_tracer_provider(provider)
