@@ -198,5 +198,5 @@ team-NaviX/
 
 ## Academic Integrity
 
-AI coding assistants (Claude, ChatGPT) were used as collaborators during development.
+AI coding assistants (Claude, ChatGPT, Gemini) were used as collaborators during development.
 All code is understood and defensible by the team. See `report/report.pdf` for details.
