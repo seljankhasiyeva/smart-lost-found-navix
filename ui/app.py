@@ -1,150 +1,89 @@
 import os
-
-os.environ["NO_PROXY"] = "127.0.0.1,localhost"
-
 import requests
-import gradio as gr
+import streamlit as st
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
+st.set_page_config(page_title="Smart Lost & Found", layout="wide")
+st.title("Smart Lost & Found")
+st.caption("AI-powered item matching system")
 
-def register_item(image, description, status):
-    if image is None:
-        return "Please upload an image."
-    if not description.strip():
-        return "Please enter a description."
-    try:
-        with open(image, "rb") as f:
-            files = {"image": (os.path.basename(image), f, "image/jpeg")}
+tab1, tab2, tab3 = st.tabs(["Register Item", "Find Matches", "All Items"])
+
+with tab1:
+    st.subheader("Register a new item")
+    with st.form("register_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            uploaded_file = st.file_uploader("Upload Image (JPG/PNG):", type=["jpg", "png"])
+        with col2:
+            status = st.radio("Item Status:", ["lost", "found"], horizontal=True)
+            description = st.text_area("Description:", placeholder="e.g. Black Nike backpack", height=120)
+        submitted = st.form_submit_button("Submit Registration")
+    if submitted:
+        if uploaded_file and description:
+            files = {"image": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             data = {"text": description}
-            response = requests.post(
-                f"{API_URL}/items/{status}",
-                files=files,
-                data=data,
-            )
-        if response.status_code == 200:
-            item_id = response.json().get("item_id")
-            return f"Registered successfully!\n\n**Item ID:** `{item_id}`"
+            try:
+                response = requests.post(f"{API_URL}/items/{status}", files=files, data=data)
+                if response.status_code == 200:
+                    st.success(f"Registered! Item ID: `{response.json().get('item_id')}`")
+                else:
+                    st.error(f"Error: {response.text}")
+            except Exception as e:
+                st.error(f"Connection error: {e}")
         else:
-            return f"Error {response.status_code}: {response.text}"
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to the API server."
-    except Exception as e:
-        return f"Error: {e}"
+            st.warning("Please provide both image and description.")
 
-
-def find_matches(item_id, k):
-    if not item_id.strip():
-        return "Please enter an Item ID."
-    try:
-        res = requests.get(
-            f"{API_URL}/items/{item_id}/matches",
-            params={"k": int(k)},
-        )
-        if res.status_code == 200:
-            matches = res.json()
-            if not matches:
-                return "No matches found."
-            result = ""
-            for i, m in enumerate(matches, 1):
-                result += f"**Match {i}**\n"
-                result += f"• Score: `{m.get('score', 0):.2f}`\n"
-                result += f"• Item ID: `{m.get('item', {}).get('id', 'N/A')}`\n"
-                result += f"• Status: `{m.get('item', {}).get('status', 'N/A')}`\n"
-                result += f"• Description: {m.get('item', {}).get('user_text', 'N/A')}\n"
-                result += f"• Reason: {m.get('reason', 'N/A')}\n\n"
-            return result
+with tab2:
+    st.subheader("Find matches")
+    item_id = st.text_input("Item ID:", placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000")
+    k = st.slider("Number of matches:", 1, 10, 3)
+    if st.button("Search Matches"):
+        if item_id:
+            try:
+                res = requests.get(f"{API_URL}/items/{item_id}/matches", params={"k": k})
+                if res.status_code == 200:
+                    matches = res.json()
+                    if not matches:
+                        st.info("No matches found.")
+                    else:
+                        for i, m in enumerate(matches, 1):
+                            with st.expander(f"Match {i} — Score: {m.get('score', 0):.2f}"):
+                                st.write(f"**Item ID:** {m.get('item', {}).get('id', 'N/A')}")
+                                st.write(f"**Status:** {m.get('item', {}).get('status', 'N/A')}")
+                                st.write(f"**Description:** {m.get('item', {}).get('user_text', 'N/A')}")
+                                st.write(f"**Reason:** {m.get('reason', 'N/A')}")
+                else:
+                    st.error(f"Error: {res.text}")
+            except Exception as e:
+                st.error(f"Connection error: {e}")
         else:
-            return f"Error {res.status_code}: {res.text}"
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to the API server."
-    except Exception as e:
-        return f"Error: {e}"
+            st.warning("Please enter an Item ID.")
 
-
-def list_items(status_filter):
-    try:
-        params = {}
-        if status_filter != "All":
-            params["status"] = status_filter
-        res = requests.get(f"{API_URL}/items", params=params)
-        if res.status_code == 200:
-            items = res.json()
-            if not items:
-                return "No items found."
-            result = ""
-            for item in items:
-                result += f"**ID:** `{item.get('id')}`\n"
-                result += f"• Status: `{item.get('status')}`\n"
-                result += f"• Description: {item.get('user_text')}\n"
-                result += f"• Image: `{item.get('image_path')}`\n\n"
-            return result
-        else:
-            return f"Error {res.status_code}: {res.text}"
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to the API server."
-    except Exception as e:
-        return f"Error: {e}"
-
-
-with gr.Blocks(title="Smart Lost & Found") as demo:
-
-    gr.Markdown("# Smart Lost & Found")
-    gr.Markdown("AI-powered item matching system")
-
-    with gr.Tab("Register Item"):
-        with gr.Row():
-            with gr.Column():
-                image_input = gr.Image(
-                    type="filepath",
-                    label="Upload Image (JPG/PNG)",
-                )
-            with gr.Column():
-                status_input = gr.Radio(
-                    choices=["lost", "found"],
-                    value="lost",
-                    label="Item Status",
-                )
-                desc_input = gr.Textbox(
-                    label="Description",
-                    placeholder="e.g. Black Nike backpack",
-                    lines=3,
-                )
-                register_btn = gr.Button("Submit Registration")
-        register_output = gr.Markdown()
-        register_btn.click(
-            fn=register_item,
-            inputs=[image_input, desc_input, status_input],
-            outputs=register_output,
-        )
-
-    with gr.Tab("Find Matches"):
-        id_input = gr.Textbox(
-            label="Item ID",
-            placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000",
-        )
-        k_input = gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of matches (k)")
-        search_btn = gr.Button("Search Matches")
-        search_output = gr.Markdown()
-        search_btn.click(
-            fn=find_matches,
-            inputs=[id_input, k_input],
-            outputs=search_output,
-        )
-
-    with gr.Tab("All Items"):
-        status_filter = gr.Radio(
-            choices=["All", "lost", "found"],
-            value="All",
-            label="Filter by status",
-        )
-        list_btn = gr.Button("Refresh List")
-        list_output = gr.Markdown()
-        list_btn.click(
-            fn=list_items,
-            inputs=[status_filter],
-            outputs=list_output,
-        )
-
-if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
+with tab3:
+    st.subheader("All items")
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        status_filter = st.radio("Filter by status:", ["All", "lost", "found"], horizontal=True)
+    with col2:
+        refresh = st.button("Refresh List")
+    if refresh:
+        try:
+            params = {} if status_filter == "All" else {"status": status_filter}
+            res = requests.get(f"{API_URL}/items", params=params)
+            if res.status_code == 200:
+                items = res.json()
+                if not items:
+                    st.info("No items found.")
+                else:
+                    for item in items:
+                        with st.expander(f"{item.get('status', '').upper()} — {item.get('user_text', '')[:50]}"):
+                            st.write(f"**ID:** {item.get('id')}")
+                            st.write(f"**Status:** {item.get('status')}")
+                            st.write(f"**Description:** {item.get('user_text')}")
+                            st.write(f"**Image:** {item.get('image_path')}")
+            else:
+                st.error("Failed to fetch items.")
+        except Exception as e:
+            st.error(f"Connection error: {e}")
