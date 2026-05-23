@@ -86,3 +86,15 @@ def sample_image(tmp_path):
     p = tmp_path / "tiny.png"
     p.write_bytes(png_bytes)
     return str(p)
+
+import asyncpg
+from unittest.mock import AsyncMock, MagicMock
+
+@pytest.fixture
+def mock_pool():
+    conn = AsyncMock()
+    conn.__aenter__ = AsyncMock(return_value=conn)
+    conn.__aexit__ = AsyncMock(return_value=False)
+    pool = MagicMock(spec=asyncpg.Pool)
+    pool.acquire = MagicMock(return_value=conn)
+    return pool, conn
