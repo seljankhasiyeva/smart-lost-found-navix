@@ -1,4 +1,7 @@
 import os
+
+os.environ["NO_PROXY"] = "127.0.0.1,localhost"
+
 import requests
 import gradio as gr
 
