@@ -115,8 +115,8 @@ python -m src.cli list-items --status lost
 ## Web UI (Bonus)
 
 ```bash
-pip install gradio
-python ui/app.py
+pip install streamlit
+streamlit run ui/app.py
 ```
 
 Open `http://localhost:7860`
@@ -175,16 +175,23 @@ team-NaviX/
 ├── ai/              # PROVIDED — do not modify
 ├── src/
 │   ├── core/        # Domain — models, interfaces, exceptions, validation
-│   ├── services/    # Application — AI wrapper, retry, logging
+│   ├── services/    # Application — AI wrapper, retry, logging + bonus modules
 │   ├── concurrency/ # Application — async pipeline
 │   ├── storage/     # Infrastructure — PostgreSQL repository
 │   ├── api.py       # FastAPI HTTP server
 │   └── cli.py       # Click CLI
 ├── tests/           # Offline pytest suite
 ├── scripts/         # demo.py and benchmark.py
-├── ui/              # Gradio web UI (bonus)
-└── docs/
-    └── architecture.md
+├── ui/              # Streamlit Web UI (bonus)
+├── data/            # sample lost/found images
+├── artefacts/       # demo run outputs
+├── .github/
+│   └── workflows/   # GitHub Actions CI (bonus)
+├── docs/
+│   └── architecture.md
+└── report/
+    ├── Report.pdf
+    └── Slide.pdf
 ```
 
 ---
